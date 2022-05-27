@@ -1,0 +1,3 @@
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+pHcalc = "64090b7d-f731-4a8a-9410-9354abd6beeb"
