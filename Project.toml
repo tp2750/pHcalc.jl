@@ -3,6 +3,9 @@ uuid = "64090b7d-f731-4a8a-9410-9354abd6beeb"
 authors = ["Thomas Poulsen <thomas@lha66.dk> and contributors"]
 version = "0.1.0"
 
+[deps]
+Optim = "429524aa-4258-5aef-a3af-852621145aeb"
+
 [compat]
 julia = "1"
 
