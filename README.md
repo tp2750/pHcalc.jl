@@ -183,5 +183,4 @@ So the Julia version is about 80 times faster.
 
 Does it matter? [Perhaps](https://github.com/rnelsonchem/pHcalc/issues/2).
 
-# Theory
 
