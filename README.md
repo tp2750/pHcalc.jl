@@ -5,7 +5,7 @@
 [![Build Status](https://github.com/tp2750/pHcalc.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/tp2750/pHcalc.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/tp2750/pHcalc.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/tp2750/pHcalc.jl)
 
-This is a Julia port of the pyhthon library [pHcalc](https://github.com/rnelsonchem/pHcalc) by Ryan Nelson.
+This is a Julia port of the Python library [pHcalc](https://github.com/rnelsonchem/pHcalc) by Ryan Nelson.
 
 # Installation
 
@@ -26,16 +26,16 @@ The basic interface is the function `acid`:
 * `acid(concentration, pKa; charge=0)`: a weak acid given with one or more pKa values. The `charge` is the charge of the fully protonated form.
 * `acid(; concentration, pKa=missing; charge=0)`: all parameters can be specified as keyword parameters.
 
-Similarly, there is a `base` funtion, which is just an alias of the `acid` function with pKb = 14-pKa.
+Similarly, there is a `base` function, which is just an alias of the `acid` function with pKb = 14-pKa.
 See examples below.
 
 ## pH of HCl and NaOH
 
-The strong acids and bases are modeled just by the `acid` and `base` fuctions, wher ethe only parameter is the molar concentration.
+The strong acids and bases are modeled just by the `acid` and `base` functions, where the only parameter is the molar concentration.
 
 ### 0.01 M HCl, 1E-8 M HCl
 
-A colution with a concentration of 1E-2 M HCl has a pH of 2, and one with a concentration of 1E-8 M HCl has a concentration just below 7.
+A solution with a concentration of 1E-2 M HCl has a pH of 2, and one with a concentration of 1E-8 M HCl has a concentration just below 7.
 
 ```julia
 julia> using pHcalc
@@ -143,7 +143,7 @@ julia> titration_curve([2.16, 7.21, 12.32], 0., 0.01)
 
 ![Titration curve](img/titration_curve-1.png)
 
-# Comparisson to python version
+# Comparison to python version
 
 The examples above show that we get the same values as the python library.
 Is it faster?
@@ -179,7 +179,7 @@ print("--- %s seconds ---" % (time.time() - start_time))
 ## --- 2.083081007003784 seconds ---
 ```
 
-So the Julia version is a bout 100x times faster.
+So the Julia version is about 80 times faster.
 
 Does it matter? [Perhaps](https://github.com/rnelsonchem/pHcalc/issues/2).
 
