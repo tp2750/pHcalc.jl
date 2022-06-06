@@ -141,6 +141,8 @@ julia> function titration_curve(pKa, charge, concentration; volume = 1., base_co
 julia> titration_curve([2.16, 7.21, 12.32], 0., 0.01)
 ```
 
+![Titration curve](img/titration_curve-1.png)
+
 # Comparisson to python version
 
 The examples above show that we get the same values as the python library.
