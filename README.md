@@ -73,7 +73,7 @@ julia> pH([HF(0.01), base(0.01)])
 
 ## Polyprotic acids
 
-### pH of 0.01 M H2CO3
+### pH of 0.01 M H₂CO₃
 
 Carbonic acid has 2 pKa values. 
 The values used in by Ryan Nelson are: 6.3, 10.32.
@@ -106,13 +106,13 @@ julia> pH(acid(0.01, [2.35, 9.69], charge=1))
 6.099154517095277
 ```
 
-### pH of 0.01 M (NH4)3PO4
+### pH of 0.01 M (NH₄)₃PO₄
 
 As a more complex example, we reproduce the ammonium phosphate example of the [pHcalc README](https://github.com/rnelsonchem/pHcalc/blob/master/README.rst).
 
-We used the pKa values of Phosphoric acid (H3PO4) [are](https://chem.libretexts.org/Ancillary_Materials/Reference/Reference_Tables/Equilibrium_Constants/E1%3A_Acid_Dissociation_Constants_at_25C): 2.16, 7.21, 12.32, and the pKb of ammonia [is](https://chem.libretexts.org/Ancillary_Materials/Reference/Reference_Tables/Equilibrium_Constants/E2._Base_Dissociation_Constants_at_25C) 4.75.
+We used the pKa values of Phosphoric acid (H₃PO₄) [are](https://chem.libretexts.org/Ancillary_Materials/Reference/Reference_Tables/Equilibrium_Constants/E1%3A_Acid_Dissociation_Constants_at_25C): 2.16, 7.21, 12.32, and the pKb of ammonia [is](https://chem.libretexts.org/Ancillary_Materials/Reference/Reference_Tables/Equilibrium_Constants/E2._Base_Dissociation_Constants_at_25C) 4.75.
 
-To model 0.01 M of (NH4)3PO4 we take 0.01 M of H3PO4 and 0.03 M of NH4 with a charge of +1:
+To model 0.01 M of (NH₄)₃PO₄ we take 0.01 M of H3PO4 and 0.03 M of NH4 with a charge of +1:
 
 
 ```julia
@@ -151,9 +151,14 @@ Is it faster?
 ## Julia
 
 ```julia
-julia> titrant = acid(0.01, [2.16, 7.21, 12.32])
-julia> @time [pH([titrant, base(x/1.)]) for x in range(1E-8, stop=.05, length=500)];
-  0.262207 seconds (1.20 M allocations: 52.317 MiB, 4.82% gc time, 28.03% compilation time)
+julia> using pHcalc
+julia> function tit_curve(pKa, charge, concentration; volume = 1., base_conc =  range(1E-8, stop=.05, length=500))
+           titrant = acid(concentration, pKa, charge=charge)
+           [pH([titrant, base(x/volume)]) for x in base_conc]
+       end
+
+julia> @time tit_curve([2.16, 7.21, 12.32], 0., 0.01);
+  0.175207 seconds (1.10 M allocations: 47.210 MiB, 7.22% gc time)
 ```
 
 ## Python
@@ -179,7 +184,7 @@ print("--- %s seconds ---" % (time.time() - start_time))
 ## --- 2.083081007003784 seconds ---
 ```
 
-So the Julia version is about 80 times faster.
+So the Julia version is about 12 times faster.
 
 Does it matter? [Perhaps](https://github.com/rnelsonchem/pHcalc/issues/2).
 
