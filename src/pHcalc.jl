@@ -32,10 +32,10 @@ struct Acid{T} <: Titratable
     pKa::Vector{T}
     charge::Vector{T}
     concentration::T
-    function Acid(Ka::Vector{T}, charge::Vector{T}, concentration::T) where T
-        @assert length(charge) == (length(Ka) +1)
+    function Acid(pKa::Vector{T}, charge::Vector{T}, concentration::T) where T
+        @assert length(charge) == (length(pKa) +1)
         @assert all(diff(charge) .== -1)
-        new{T}(Ka, charge, concentration)
+        new{T}(pKa, charge, concentration)
     end
 end
 function Acid(;pKa, charge, concentration)
