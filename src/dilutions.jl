@@ -1,3 +1,5 @@
+using Unitful
+
 struct Acid_dilution{T} <: Titratable
     stock::Union{Acid,Ion}
     volume::Unitful.Volume
