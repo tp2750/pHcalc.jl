@@ -4,6 +4,7 @@ import Optim
 
 export Acid, Ion, pH, pH_res
 export acid, base, NaOH, HCl
+export Acid_aliquod, mix
 
 acid(concentration) = Ion(;charge=-1, concentration=concentration)
 base(concentration) = Ion(;charge= 1, concentration=concentration)
@@ -113,6 +114,31 @@ function titration_curve(pKa, charge, concentration; volume = 1., base =  range(
     hline!(pKa, label="")
     display(p1)
 end
+
+struct Acid_aliquod{S <: Titratable,T}
+    stock::S
+    volume::T
+end
+
+update_concentration(x::Acid,factor) = Acid(x.pKa, x.charge, x.concentration*factor)
+update_concentration(x::Ion,factor) = Ion(x.charge, x.concentration*factor)
+
+
+function buffer(v) ## return Vector{<:Titratable} with updated concentrations
+    total_volume = sum([x.volume for x in v])
+    [update_concentration(x.stock, x.stock.concentration*x.volume/total_volume) for x in v]
+end
+
+#=
+Usage:
+citrate_100mM = acid(0.1, [3.13, 4.76, 6.39], charge=0)
+dsp_200mM = acid(0.2, [2.15, 6.82, 12.35], charge=0)
+
+pH(mix([Acid_aliquod(dsp_200mM, 5.4), Acid_aliquod(citrate_100mM, 44.6)]))
+
+This models a mix of 5.4 mL 200 mM DSP and 44.6 mL 100 mM Citric acid
+=#
+
 
 ## TODO: titrate_NaOH, titrate_HCl
 
