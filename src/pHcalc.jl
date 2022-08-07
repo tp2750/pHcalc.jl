@@ -4,7 +4,7 @@ import Optim
 
 export Acid, Ion, pH, pH_res
 export acid, base, NaOH, HCl
-export Acid_aliquod, mix
+export Acid_aliquod, mix, concentration, dilute, sample
 
 acid(concentration) = Ion(;charge=-1, concentration=concentration)
 base(concentration) = Ion(;charge= 1, concentration=concentration)
@@ -120,23 +120,51 @@ struct Acid_aliquod{S <: Titratable,T}
     volume::T
 end
 
-update_concentration(x::Acid,factor) = Acid(x.pKa, x.charge, x.concentration*factor)
-update_concentration(x::Ion,factor) = Ion(x.charge, x.concentration*factor)
+sample(stock,vol) = Acid_aliquod(stock,vol)
+concentration(x::T) where T <:Titratable  = x.concentration
+concentration(x::Acid_aliquod)  = x.stock.concentration
+stock(x::Acid_aliquod)  = x.stock
+dilute(x::Acid,factor) = Acid(x.pKa, x.charge, x.concentration/factor)
+dilute(x::Ion,factor) = Ion(x.charge, x.concentration/factor)
 
-
-function buffer(v) ## return Vector{<:Titratable} with updated concentrations
+function mix(v) ## return Vector{<:Titratable} with updated concentrations
     total_volume = sum([x.volume for x in v])
-    [update_concentration(x.stock, x.stock.concentration*x.volume/total_volume) for x in v]
+    [dilute(x.stock, total_volume/x.volume) for x in v]
 end
+
 
 #=
 Usage:
 citrate_100mM = acid(0.1, [3.13, 4.76, 6.39], charge=0)
-dsp_200mM = acid(0.2, [2.15, 6.82, 12.35], charge=0)
+dsp_200mM = acid(0.2, [2.15, 6.82, 12.35], charge=3)
 
 pH(mix([Acid_aliquod(dsp_200mM, 5.4), Acid_aliquod(citrate_100mM, 44.6)]))
 
 This models a mix of 5.4 mL 200 mM DSP and 44.6 mL 100 mM Citric acid
+
+See https://microscopy.berkeley.edu/buffers-and-buffer-tables/
+
+Compare to: https://www.egr.msu.edu/~scb-group-web/buffers/buffers.html
+
+citrate: originalpKa = [3.13,4.79,6.39]; Activities at 0.1M : [3.047, 4.3971, 5.5797]
+phosphate:  originalpKa = [	2.148, 7.198, 12.375];;  Activities at 0.1M : [2.06486, 6.80506, 11.564674]
+
+
+This works:
+pH([acid(0.001226/1000, [3.047, 4.3971, 5.5797], charge=0), acid(0.09877/1000, [3.047, 4.3971, 5.5797], charge=3)])
+6.999999208472769
+
+pH([acid(38.96/1000, [2.06486, 6.80506, 11.564674], charge=1), acid(61.04/1000, [2.06486, 6.80506, 11.564674], charge=2)])
+7.000026671703892
+
+Titration curve:
+plot([pH(mix([sample(acid(0.2, [2.15, 6.82, 12.35], charge=0), 100), sample(base(.1),x)])) for x in 1:1000])
+
+buffer = [acid(38.96/1000, [2.06486, 6.80506, 11.564674], charge=1), acid(61.04/1000, [2.06486, 6.80506, 11.564674], charge=2)]
+plot([pH(mix([sample(buffer, 100), sample(base(.1),x)])) for x in 1:1000])
+
+TODO: sample vector of Titratables
+
 =#
 
 

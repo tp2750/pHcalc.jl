@@ -55,3 +55,9 @@ end
     NH4_3 = acid(pKa = 9.25, concentration = 0.03, charge=1)
     @test abs(pH([PO4, NH4_3]) - 8.959151804386952) < 1E-10
 end
+
+@testset "Mixing" begin
+    ## Mixing same conc does not change conc
+    citrate_100mM = acid(0.1, [3.13, 4.76, 6.39], charge=0)
+    @test 0.1 == sum(concentration.(mix([sample(citrate_100mM, 10), sample(citrate_100mM, 20)])))
+end
