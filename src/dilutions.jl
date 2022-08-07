@@ -2,8 +2,10 @@ using Unitful
 
 struct Acid_dilution{T} <: Titratable
     stock::Union{Acid,Ion}
-    volume::Unitful.Volume
+    volume::typeof(1.0u"L")
 end
+
+aliquod(stock, volume) = Acid_dilution(stock, volume)
 
 concentration(solution::Acid_dilution) = concentration(solution.stock)
 concentration(acid::Union{Acid,Ion}) = acid.concentration ## Should go with definition of Acid and Ion
