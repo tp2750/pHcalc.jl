@@ -5,6 +5,7 @@ import Optim
 export Acid, Ion, pH, pH_res
 export acid, base, NaOH, HCl
 export Acid_aliquod, mix, concentration, dilute, sample
+export titration_curve
 
 acid(concentration) = Ion(;charge=-1, concentration=concentration)
 base(concentration) = Ion(;charge= 1, concentration=concentration)
@@ -124,14 +125,43 @@ sample(stock,vol) = Acid_aliquod(stock,vol)
 concentration(x::T) where T <:Titratable  = x.concentration
 concentration(x::Acid_aliquod)  = x.stock.concentration
 stock(x::Acid_aliquod)  = x.stock
-dilute(x::Acid,factor) = Acid(x.pKa, x.charge, x.concentration/factor)
-dilute(x::Ion,factor) = Ion(x.charge, x.concentration/factor)
+dilute(x::Acid,factor) = Acid(x.pKa, x.charge, x.concentration/factor) ## use Accessots.jl for this? 
+dilute(x::Ion,factor) = Ion(x.charge, x.concentration/factor) ##  https://github.com/JuliaObjects/Accessors.jl
 
 function mix(v) ## return Vector{<:Titratable} with updated concentrations
     total_volume = sum([x.volume for x in v])
     [dilute(x.stock, total_volume/x.volume) for x in v]
 end
 
+# # Known chemicals
+
+H3PO4(conc) = acid(conc, [2.148, 7.198, 12.375]) ## From https://www.egr.msu.edu/~scb-group-web/buffers/buffers.html view-source:https://www.egr.msu.edu/~scb-group-web/buffers/buffers.js
+NaH2PO4(conc) = acid(conc, [2.148, 7.198, 12.375], charge = 1)
+Na2HPO4(conc) = acid(conc, [2.148, 7.198, 12.375], charge = 2)
+
+## Debye-Hückel correction
+## Based on view-source:https://www.egr.msu.edu/~scb-group-web/buffers/buffers.js
+function ioncorrection(pKa, strength, charge, size = 5.0)
+    za = charge
+    con = strength
+    a = size
+    cona = strength/2
+    conb = strength/2
+    zb = charge -1
+    ccat = -1 * charge * cona - zb * conb
+    Ic = 0.5*(ccat+(za*za)*cona+((zb*zb)*conb))
+    Abig = 0.509 ## 0.5085 M−1 https://www.mdpi.com/2624-8549/3/2/34/htm ## Note these are temperature dependent
+    B = 0.33 ## B = 3.29 nm−1 M−1/2 , ## wp:  0.5085 and 0.3281 at 25 °C in water [2]. 
+    m = Abig*sqrt(Ic)/(1+B*a*sqrt(Ic))
+    dpKa= -1*m*(zb*zb-za*za)
+    pKanew = pKa+dpKa
+    pKanew
+end
+
+function ioncorrection(pKa::Vector{}; strength=0.1, size = 5.0) 
+    charge = -1. .* collect(0:length(pKa)-1)
+    [ioncorrection(pKa[i], strength, charge[i], size) for i in 1:length(pKa)]
+end
 
 #=
 Usage:

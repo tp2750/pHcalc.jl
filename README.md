@@ -157,7 +157,7 @@ julia> function tit_curve(pKa, charge, concentration; volume = 1., base_conc =  
            [pH([titrant, base(x/volume)]) for x in base_conc]
        end
 
-julia> @time tit_curve([2.16, 7.21, 12.32], 0., 0.01);
+julia> @time c1 = tit_curve([2.16, 7.21, 12.32], 0., 0.01);
   0.175207 seconds (1.10 M allocations: 47.210 MiB, 7.22% gc time)
 ```
 
@@ -177,9 +177,11 @@ def tit_curve():
         system = System(phos, na)
         system.pHsolve(guess_est=True)
         phs.append(system.pH)
+    
+    return na_moles, phs
 
 start_time = time.time()
-tit_curve()
+x1, y1 = tit_curve()
 print("--- %s seconds ---" % (time.time() - start_time))
 ## --- 2.083081007003784 seconds ---
 ```
@@ -188,4 +190,43 @@ So the Julia version is about 12 times faster.
 
 Does it matter? [Perhaps](https://github.com/rnelsonchem/pHcalc/issues/2).
 
+# Phosphate buffer
 
+We can quite acurately reproduce the pH values of Sørensen's phosphate buffer from [this table](https://microscopy.berkeley.edu/buffers-and-buffer-tables/) using pKa values adjusted for a 100 mM ionic strength:  [2.06486, 6.80506, 11.564674].
+
+The phosphate buffer consists of a mix of the waek acid NaH2PO4 and it's conjugate base: Na2HPO4. We model these as phosphoric acid with a charge parameter given by the number of missing hydrogens:
+
+* NaH2PO4(conc) = acid(conc, [2.065, 6.805, 11.565], charge=1)
+* Na2HPO4(conc) = acid(conc, [2.065, 6.805, 11.565], charge=2)
+
+As an example, to get a 100 mM buffer at pH 7, [the table](https://microscopy.berkeley.edu/buffers-and-buffer-tables/) says we should mix 39.0 mM NaH2PO4 and 61.0 mM Na2HPO4.
+This gives:
+
+```julia
+pH([acid(0.039, [2.065, 6.805, 11.565], charge=1), acid(0.061, [2.065, 6.805, 11.565], charge=2)])
+# 6.999236502941879
+```
+
+The recipe uses 200 mM stocks, and does a final 2X dilution. 
+We can model that directly:
+
+```julia
+A = sample(acid(0.2, [2.065, 6.805, 11.565], charge=1), 0.039)
+B = sample(acid(0.2, [2.065, 6.805, 11.565], charge=2), 0.061)
+pH(dilute.(mix([A,B]),2))
+# 6.999236502941879
+```
+
+# Correcting for ionic strength
+
+We use the same method as in  [Clymer / Barton]( https://www.egr.msu.edu/~scb-group-web/buffers/buffers.html) to adjust for ionic strength.
+
+In the case of phosphate, we get (at 25C):
+
+```julia
+julia> ioncorrection([2.148, 7.198, 12.375], strength=0.1)
+3-element Vector{Float64}:
+  2.0648590825585424
+  6.805057825843171
+ 11.56467418465781
+```
