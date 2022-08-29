@@ -133,35 +133,62 @@ function mix(v) ## return Vector{<:Titratable} with updated concentrations
     [dilute(x.stock, total_volume/x.volume) for x in v]
 end
 
+## Debye-Hückel correction
+## Based on view-source:https://www.egr.msu.edu/~scb-group-web/buffers/buffers.js
+function ioncorrection(pKa, M, Z, size = 5.0)
+    Ic = 0.5*M*(Z-1)^2
+    A = 0.509 ## 0.5085 M−1 https://www.mdpi.com/2624-8549/3/2/34/htm ## Note these are temperature dependent
+    B = 0.33 ## B = 3.29 nm−1 M−1/2 , ## wp:  0.5085 and 0.3281 at 25 °C in water [2]. 
+    m = A*sqrt(Ic)/(1+B*size*sqrt(Ic))
+    dpKa= -m*(1-2*Z)
+    pKanew = pKa+dpKa
+    pKanew
+end
+
+"""
+    Correct pKa values to a buffer concentration of M moles per liter.
+    This assumes temperature 25C
+"""
+function ioncorrection(pKa::Vector{}; M=0.1, size = 5.0)
+    if M > .5
+        @warn "Ionic strength correction not relizable for M > .5"
+    end
+    charge = -1. .* collect(0:length(pKa)-1)
+    [ioncorrection(pKa[i], M, charge[i], size) for i in 1:length(pKa)]
+end
+
+
 # # Known chemicals
 
 H3PO4(conc) = acid(conc, [2.148, 7.198, 12.375]) ## From https://www.egr.msu.edu/~scb-group-web/buffers/buffers.html view-source:https://www.egr.msu.edu/~scb-group-web/buffers/buffers.js
 NaH2PO4(conc) = acid(conc, [2.148, 7.198, 12.375], charge = 1)
 Na2HPO4(conc) = acid(conc, [2.148, 7.198, 12.375], charge = 2)
 
-## Debye-Hückel correction
-## Based on view-source:https://www.egr.msu.edu/~scb-group-web/buffers/buffers.js
-function ioncorrection(pKa, strength, charge, size = 5.0)
-    za = charge
-    con = strength
-    a = size
-    cona = strength/2
-    conb = strength/2
-    zb = charge -1
-    ccat = -1 * charge * cona - zb * conb
-    Ic = 0.5*(ccat+(za*za)*cona+((zb*zb)*conb))
-    Abig = 0.509 ## 0.5085 M−1 https://www.mdpi.com/2624-8549/3/2/34/htm ## Note these are temperature dependent
-    B = 0.33 ## B = 3.29 nm−1 M−1/2 , ## wp:  0.5085 and 0.3281 at 25 °C in water [2]. 
-    m = Abig*sqrt(Ic)/(1+B*a*sqrt(Ic))
-    dpKa= -1*m*(zb*zb-za*za)
-    pKanew = pKa+dpKa
-    pKanew
+## More pKa values here: [Samuelsen](https://rucforsk.ruc.dk/ws/portalfiles/portal/64240902/Buffer_Solutions_in_Drug_Formulation_and_Processing_2nd_revision.pdf)
+
+acetate(conc)   = acid(conc, 4.76)
+carbonate(conc) = acid(conc, [3.60, 6.35, 10.33])
+citrate(conc)   = acid(conc, [3.13, 4.76, 6.40])
+succinate(conc) = acid(conc, [3.21, 5.64])
+phosphate(conc) = acid(conc, [2.15, 7.20, 12.33])
+tris(conc)      = acid(conc, 8.06) ## Samuelsen: pKa increases with ionic strength, so ioncorrection function does not work in this case.
+hepes(conc)     = acid(conc, [3.00, 7.50])
+mes(conc)       = acid(conc, 6.27)
+taps(conc)      = acid(conc, 8.44)
+histidine(conc) = acid(conc, [1.56, 6.07, 9.34])
+lysine(conc)    = acid(conc, [1.85, 9.09, 10.90])
+glutamate(conc) = acid(conc, [2.19, 4.45, 10.10])
+
+struct Buffer{T <: Titratable}
+    acid::T
+    ionstrength_correction::Float64 ## 1 if ioncorection formula holds
+    ΔH::Float64 ## kJ/mol
+    ΔCp::Float64 ## J/K/mol
 end
 
-function ioncorrection(pKa::Vector{}; strength=0.1, size = 5.0) 
-    charge = -1. .* collect(0:length(pKa)-1)
-    [ioncorrection(pKa[i], strength, charge[i], size) for i in 1:length(pKa)]
-end
+
+## Note: when we redo this for a ChemicalBuffers registered package, we should take concentration out of the Acid struct.
+## Also current Ion should be named StrongAcid or just replaced by pKa values for strong acids like HCl (-5?).
 
 #=
 Usage:

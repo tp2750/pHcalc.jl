@@ -61,3 +61,8 @@ end
     citrate_100mM = acid(0.1, [3.13, 4.76, 6.39], charge=0)
     @test 0.1 == sum(concentration.(mix([sample(citrate_100mM, 10), sample(citrate_100mM, 20)])))
 end
+
+@testset "Ionic strength correction" begin
+    @test pHcalc.ioncorrection([2.148, 7.198, 12.375], M=.1, size=5.) == [2.0648590825585424, 6.805057825843171, 11.56467418465781]
+end
+    
